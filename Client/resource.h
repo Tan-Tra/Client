@@ -21,7 +21,6 @@
 #define IDC_MESSAGE                     1008
 #define IDC_SEND                        1009
 #define IDC_MSGBOX2                     1010
-#define IDC_EDIT4                       1012
 #define IDC_IPADDR                      1012
 
 // Next default values for new objects

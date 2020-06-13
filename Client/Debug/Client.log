@@ -1,1 +1,10 @@
-﻿  Client.vcxproj -> C:\Users\HP\Desktop\Client\Debug\Client.exe
+﻿cl : command line warning D9035: option 'Gm' has been deprecated and will be removed in a future release
+  ClientDlg.cpp
+C:\Users\HP\Desktop\Client\Client\ClientDlg.cpp(133,2): warning C4996: 'wcstombs': This function or variable may be unsafe. Consider using wcstombs_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\HP\Desktop\Client\Client\ClientDlg.cpp(299,28): warning C4996: 'inet_addr': Use inet_pton() or InetPton() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
+C:\Users\HP\Desktop\Client\Client\ClientDlg.cpp(305,11): warning C4996: 'gethostbyname': Use getaddrinfo() or GetAddrInfoW() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
+C:\Users\HP\Desktop\Client\Client\ClientDlg.cpp(325,2): warning C4996: 'WSAAsyncSelect': Use WSAEventSelect() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
+C:\Users\HP\Desktop\Client\Client\ClientDlg.cpp(414,28): warning C4996: 'inet_addr': Use inet_pton() or InetPton() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
+C:\Users\HP\Desktop\Client\Client\ClientDlg.cpp(420,11): warning C4996: 'gethostbyname': Use getaddrinfo() or GetAddrInfoW() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
+C:\Users\HP\Desktop\Client\Client\ClientDlg.cpp(440,2): warning C4996: 'WSAAsyncSelect': Use WSAEventSelect() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
+  Client.vcxproj -> C:\Users\HP\Desktop\Client\Debug\Client.exe

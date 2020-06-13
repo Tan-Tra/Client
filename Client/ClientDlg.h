@@ -59,4 +59,5 @@ public:
 	afx_msg void OnBnClickedCancel();
 	afx_msg void OnBnClickedSend();
 	CString IP;
+	afx_msg void OnBnClickedSignup();
 };

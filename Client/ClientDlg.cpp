@@ -49,6 +49,7 @@ BEGIN_MESSAGE_MAP(CClientDlg, CDialog)
 	ON_EN_CHANGE(IDC_MSGBOX, &CClientDlg::OnEnChangeMsgbox)
 	ON_BN_CLICKED(IDC_CANCEL, &CClientDlg::OnBnClickedCancel)
 	ON_BN_CLICKED(IDC_SEND, &CClientDlg::OnBnClickedSend)
+	ON_BN_CLICKED(IDC_SIGNUP, &CClientDlg::OnBnClickedSignup)
 END_MESSAGE_MAP()
 
 
@@ -190,6 +191,7 @@ LRESULT CClientDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 						m_msgString += _T("Dang nhap thanh cong\r\n");
 						m_Pass = _T("");
 						UpdateData(FALSE);
+
 					}
 					//còn ngược lại thì  thông báo "<Tên Client> login"
 					else
@@ -197,7 +199,7 @@ LRESULT CClientDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 						m_msgString += strResult[2];
 						m_msgString += _T(" login\r\n");
 					}
-					GetDlgItem(IDC_LOGOUT)->EnableWindow(TRUE);
+					
 					GetDlgItem(IDC_LOGIN)->EnableWindow(FALSE);
 					GetDlgItem(IDC_SIGNUP)->EnableWindow(FALSE);
 					//Clear box Pass
@@ -207,6 +209,7 @@ LRESULT CClientDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 				{
 					m_msgString += _T("Dang nhap that bai\r\n");
 					MessageBox(_T("Dang nhap that bai\r\n"), _T("FAIL"),MB_ICONWARNING);
+					GetDlgItem(IDC_LOGOUT)->EnableWindow(FALSE);
 				}
 				/*if (flag2 == 2)
 				{
@@ -218,8 +221,21 @@ LRESULT CClientDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 			}break;
 			case 2://Thông báo đăng ký thành công hay không thành công
 			{
-
-
+				int flag2 = _ttoi(strResult[1]);
+				if (flag2 == 0)
+				{
+					MessageBox(_T("UNSUCCESSFUL \r\n"), _T("REGISTER"), MB_ICONERROR);
+					
+				}
+				else
+				{
+					m_msgString += _T("Dang ky thanh cong\r\n");
+					MessageBox(_T("SUCCESSFUL\r\n"), _T("REGISTER"), MB_ICONINFORMATION);
+					this->GetDlgItem(IDC_SIGNUP)->EnableWindow(FALSE);
+					this->GetDlgItem(IDC_LOGIN)->EnableWindow(FALSE);
+					this->GetDlgItem(IDC_LOGOUT)->EnableWindow(TRUE);
+				}
+				UpdateData(FALSE);
 			}break;
 			case 3://nhận message của các client khác được gửi lại từ sever.
 			{
@@ -244,7 +260,6 @@ LRESULT CClientDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 			UpdateData(FALSE);
 			break;
 		}
-
 	}
 	return 0;
 }
@@ -362,3 +377,66 @@ void CClientDlg::OnBnClickedSend()
 
 
 
+
+
+void CClientDlg::OnBnClickedSignup()
+{
+	// TODO: Add your control notification handler code here
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+	if (IP == "")
+	{
+		MessageBox(_T("Vui long nhap dia chi IP server"), _T("WARNING"), MB_ICONWARNING);
+		return;
+	}
+	if (m_userName == "")
+	{
+		MessageBox(_T("Vui long nhap ten user dang ky"), _T("WARNING"), MB_ICONWARNING);
+		return;
+	}
+	if (m_Pass == "")
+	{
+		MessageBox(_T("Vui long nhap mat khau."), _T("WARNING"), MB_ICONWARNING);
+	}
+	sClient = socket(AF_INET, SOCK_STREAM, 0);
+	hostent* host = NULL;
+	if (sClient == INVALID_SOCKET)
+	{
+		MessageBox(_T("socket() failed"), _T("ERROR"), 0);
+		return;
+	}
+
+	servAdd.sin_family = AF_INET;
+	servAdd.sin_port = htons(PORT);
+
+	char* cIP = ConvertToChar(IP);
+
+	servAdd.sin_addr.s_addr = inet_addr(cIP);
+
+	CStringA cpy_IP(IP);
+
+	if (servAdd.sin_addr.s_addr == INADDR_NONE)
+	{
+		host = (gethostbyname(cpy_IP));
+		if (host == NULL)
+		{
+			MessageBox(_T("Khong the ket noi den server."), _T("ERROR"), 0);
+		}
+		CopyMemory(&servAdd.sin_addr, host->h_addr_list[0], host->h_length);
+		return;
+	}
+
+	int err = connect(sClient, (struct sockaddr*)&servAdd, sizeof(servAdd));
+	if (err == SOCKET_ERROR) {
+		MessageBox(_T("Ket noi that bai"), _T("ERROR"), MB_ICONERROR);
+		return;
+	}
+
+	Command = _T("2\r\n");
+	Command += m_userName + _T("\r\n");
+	Command += m_Pass + _T("\r\n");
+	mSend(Command);
+
+	WSAAsyncSelect(sClient, m_hWnd, WM_SOCKET, FD_READ | FD_CLOSE);
+	UpdateData(FALSE);
+}
