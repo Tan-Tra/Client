@@ -48,16 +48,17 @@ public:
 	
 	CString m_userName;
 	afx_msg void OnBnClickedLogout();
-	afx_msg void OnBnClickedAdd();
-	afx_msg void OnBnClickedSubtract();
 	afx_msg void OnEnChangeMsgbox();
-	afx_msg void OnEnChangeIp();
+
 	
 	CString m_Pass;
-	CString m_UserOnline;
 	CString m_msgSend;
 	afx_msg void OnBnClickedCancel();
 	afx_msg void OnBnClickedSend();
 	CString IP;
 	afx_msg void OnBnClickedSignup();
+	CListBox m_listClient;
+	afx_msg void OnLbnSelchangeList1();
+
 };
+DWORD WINAPI RunClientDlg(LPVOID lp);

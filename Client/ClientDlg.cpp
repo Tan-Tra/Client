@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "Client.h"
 #include "ClientDlg.h"
+#include"ClientPrivateDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -21,7 +22,6 @@ CClientDlg::CClientDlg(CWnd* pParent /*=NULL*/)
 , IP(_T(""))
 , m_userName(_T(""))
 , m_Pass(_T(""))
-, m_UserOnline(_T(""))
 , m_msgSend(_T(""))
 
 {
@@ -34,9 +34,9 @@ void CClientDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_MSGBOX, m_msgString);
 	DDX_Text(pDX, IDC_USER, m_userName);
 	DDX_Text(pDX, IDC_PASS, m_Pass);
-	DDX_Text(pDX, IDC_MSGBOX2, m_UserOnline);
 	DDX_Text(pDX, IDC_MESSAGE, m_msgSend);
 	DDX_Text(pDX, IDC_IPADDR, IP);
+	DDX_Control(pDX, IDC_LIST1, m_listClient);
 }
 
 BEGIN_MESSAGE_MAP(CClientDlg, CDialog)
@@ -50,6 +50,7 @@ BEGIN_MESSAGE_MAP(CClientDlg, CDialog)
 	ON_BN_CLICKED(IDC_CANCEL, &CClientDlg::OnBnClickedCancel)
 	ON_BN_CLICKED(IDC_SEND, &CClientDlg::OnBnClickedSend)
 	ON_BN_CLICKED(IDC_SIGNUP, &CClientDlg::OnBnClickedSignup)
+	ON_LBN_SELCHANGE(IDC_LIST1, &CClientDlg::OnLbnSelchangeList1)
 END_MESSAGE_MAP()
 
 
@@ -107,17 +108,39 @@ HCURSOR CClientDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
+DWORD WINAPI RunClientDlg(LPVOID lp)
+{
+	CClientDlg dlg;
+	//m_pMainWnd = &dlg;
+	INT_PTR nResponse = dlg.DoModal();
+	if (nResponse == IDOK)
+	{
+		// TODO: Place code here to handle when the dialog is
+		//  dismissed with OK
+	}
+	else if (nResponse == IDCANCEL)
+	{
+		// TODO: Place code here to handle when the dialog is
+		//  dismissed with Cancel
+	}
+
+	// Since the dialog has been closed, return FALSE so that we exit the
+	//  application, rather than start the application's message pump.
+
+
+	// Since the dialog has been closed, return FALSE so that we exit the
+	//  application, rather than start the application's message pump.
+
+	return 0;
+}
+
 void CClientDlg::Split(CString src, CString des[3])
 {
 	int p1, p2, p3;
 
 	p1 = src.Find(_T("\r\n"), 0);
 	des[0] = src.Mid(0, p1);
-	if (des[0] == "5")
-	{
-		des[1] = src.Mid(p1 + 2, src.GetLength() - (p1 + 2));
-		return;
-	}
+	
 	p2 = src.Find(_T("\r\n"), p1 + 1);
 	des[1] = src.Mid(p1 + 2, p2 - (p1 + 2));
 
@@ -188,22 +211,24 @@ LRESULT CClientDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 					//nếu tên trong thông điệp trùng với tên của CLient thì thông báo là "Đăng nhập thành công"
 					if (strResult[2] == m_userName)
 					{
+						m_msgString = _T("");
+						UpdateData(FALSE);
 						m_msgString += _T("Dang nhap thanh cong\r\n");
 						m_Pass = _T("");
+						this->GetDlgItem(IDC_LOGOUT)->EnableWindow(1);
+						GetDlgItem(IDC_LOGIN)->EnableWindow(FALSE);
+						GetDlgItem(IDC_SIGNUP)->EnableWindow(FALSE);
 						UpdateData(FALSE);
-
 					}
 					//còn ngược lại thì  thông báo "<Tên Client> login"
 					else
 					{
 						m_msgString += strResult[2];
-						m_msgString += _T(" login\r\n");
-					}
-					
-					GetDlgItem(IDC_LOGIN)->EnableWindow(FALSE);
-					GetDlgItem(IDC_SIGNUP)->EnableWindow(FALSE);
-					//Clear box Pass
-					
+						m_msgString += _T(" logined\r\n");
+											
+					}			
+					CString name(strResult[2]);
+					m_listClient.AddString(name);
 				}	
 				if (flag2 == 0)
 				{
@@ -211,11 +236,7 @@ LRESULT CClientDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 					MessageBox(_T("Dang nhap that bai\r\n"), _T("FAIL"),MB_ICONWARNING);
 					GetDlgItem(IDC_LOGOUT)->EnableWindow(FALSE);
 				}
-				/*if (flag2 == 2)
-				{
-					m_msgString += strResult[2];
-					m_msgString += _T("logout.\r\n");
-				}*/
+				
 				UpdateData(FALSE);
 				
 			}break;
@@ -245,14 +266,26 @@ LRESULT CClientDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 			}break;
 			case 5://nhận thông tin các Client đang online từ Server 
 			{
-				m_UserOnline = strResult[1];
+				int flag2 = _ttoi(strResult[1]);
+				if (flag2 == 0)
+				{
+					CString name(strResult[2]);
+					m_listClient.AddString(name);
+				}
+				if (flag2 == 1)
+				{
+					int index = _ttoi(strResult[2]);
+					m_listClient.DeleteString(index);
+				}
 				UpdateData(FALSE);
 			}break;
+			
 		}
 
 	}break;
 	case FD_CLOSE:
 		{
+			
 			closesocket(sClient);
 			m_msgString+=_T("Server da dong ket noi\r\n");
 			GetDlgItem(IDC_LOGOUT)->EnableWindow(FALSE);
@@ -281,6 +314,7 @@ void CClientDlg::OnBnClickedLogin()
 	if (m_Pass == "")
 	{
 		MessageBox(_T("Vui long nhap mat khau."), _T("WARNING"), MB_ICONWARNING);
+		return;
 	}
 
 	sClient = socket(AF_INET, SOCK_STREAM, 0);
@@ -332,8 +366,10 @@ void CClientDlg::OnBnClickedLogout()
 	INT_PTR i = MessageBox(_T("Ban muon logout?"),_T("Confirm"), MB_OKCANCEL);
 	if (i == IDCANCEL)
 		return;
-	Command=_T("4\r\n");
+	Command=_T("4\r\n\r\n\r\n");
 	mSend(Command);
+	this->GetDlgItem(IDC_SIGNUP)->EnableWindow(1);
+	UpdateData(FALSE);
 }
 
 void CClientDlg::OnEnChangeMsgbox()
@@ -352,6 +388,9 @@ void CClientDlg::OnEnChangeMsgbox()
 void CClientDlg::OnBnClickedCancel()
 {
 	// TODO: Add your control notification handler code here
+	Command = _T("4\r\n\r\n\r\n");
+	mSend(Command);
+	UpdateData(FALSE);
 	CClientDlg::OnCancel();
 }
 
@@ -372,11 +411,6 @@ void CClientDlg::OnBnClickedSend()
 	m_msgSend = _T("");
 	UpdateData(FALSE);	
 }
-
-
-
-
-
 
 
 void CClientDlg::OnBnClickedSignup()
@@ -439,4 +473,30 @@ void CClientDlg::OnBnClickedSignup()
 
 	WSAAsyncSelect(sClient, m_hWnd, WM_SOCKET, FD_READ | FD_CLOSE);
 	UpdateData(FALSE);
+}
+
+
+void CClientDlg::OnLbnSelchangeList1()
+{
+	// TODO: Add your control notification handler code here
+	int sel = m_listClient.GetCurSel();
+	CString name,title;
+	if (sel != LB_ERR)
+	{
+		m_listClient.GetText(sel, name);
+		//if (name != this->m_userName)
+		{
+			// TODO: Add your control notification handler code here
+				Private * priPr = new Private;
+			priPr->priSock = this->sClient;
+			priPr->receiverName = name;
+			priPr->senderName = m_userName;
+
+
+			DWORD dwRunClientPrivateDlgId;
+			HANDLE hRunClientPrivateDlg;
+			hRunClientPrivateDlg = CreateThread(NULL, 0, RunClientPrivateDlg, (LPVOID)priPr, 0, &dwRunClientPrivateDlgId);			
+		}
+	}
+
 }
